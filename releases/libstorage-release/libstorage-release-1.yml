@@ -1,0 +1,16 @@
+---
+packages:
+- name: libstorage
+  version: 9e4ea57e5ce6cb50306d4b1d2887bff61035daf6
+  fingerprint: 9e4ea57e5ce6cb50306d4b1d2887bff61035daf6
+  sha1: 51d53dc87665e939137cf03a5fc1d7ae40632d28
+  dependencies: []
+jobs:
+- name: libstorage
+  version: 5a3e158644375bbe8f5100d41c39d0c88b7b80e8
+  fingerprint: 5a3e158644375bbe8f5100d41c39d0c88b7b80e8
+  sha1: f745d478c70ebad46ed16032f44bdfbd17193af6
+commit_hash: c2cd1d01
+uncommitted_changes: true
+name: libstorage-release
+version: '1'

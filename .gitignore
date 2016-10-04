@@ -18,6 +18,5 @@ releases/**/*.tgz
 bin/
 pkg/
 *.iml
-releases/
 private.yml
 dev.yml
