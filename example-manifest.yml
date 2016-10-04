@@ -1,0 +1,62 @@
+name: libstorage-example
+director_uuid: <get-director-uuid>
+
+releases:
+- {name: libstorage, version: latest}
+
+jobs:
+  - name: libstorage-example
+    instances: 1
+    networks:
+    - name: my-favorite-network
+    templates:
+    - name: libstorage-example
+      release: libstorage-example
+    persistent_disk_pool: medium
+    vm_type: medium
+    stemcell: trusty
+    azs:
+    - my-az
+    properties:
+      libstorage: |
+        libstorage:
+          logging:
+            level: debug
+          client:
+            type: controller
+          host: tcp://0.0.0.0:7981 #This will listen for incoming connections to libstorage on this VM.
+          server:
+            services:
+              isilonservice:
+                driver: isilon
+                isilon:
+                  endpoint: https://<isilon-endpoint>:<isilon-port>
+                  insecure: <true/false>
+                  username: <a great username>
+                  password: <a great password>
+                  volumePath: <a path to mount volumes on this VM>
+                  nfsHost: <nfs host for Isilon>
+                  dataSubnet: <data subnet CIDR>
+                  quotas: <true/false>
+              scaleioservice:
+                driver: scaleio
+                scaleio:
+                  endpoint: https://<scaleio endpoint>/api
+                  insecure: <true/false>
+                  userName: <secure name>
+                  password: <secure password>
+                  protectionDomainName: <protectionDomainName here>
+                  storagePoolName: <storage pool name here>
+                  version: <version goes here>
+
+stemcells:
+- alias: trusty
+  os: ubuntu-trusty
+  version: '3262.9' #and above
+
+update:
+  canaries: 1
+  max_in_flight: 3
+  serial: false
+  canary_watch_time: 1000-240000
+  update_watch_time: 1000-240000
