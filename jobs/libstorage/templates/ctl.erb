@@ -1,0 +1,40 @@
+#!/bin/bash
+
+RUN_DIR=/var/vcap/sys/run/libstorage
+LOG_DIR=/var/vcap/sys/log/libstorage
+PIDFILE=${RUN_DIR}/pid
+
+<% libstorage_config = '/etc/libstorage' %>
+LIBSTORAGE_CONFIG=<%= libstorage_config %>
+
+case $1 in
+
+  start)
+    mkdir -p $RUN_DIR $LOG_DIR
+    chown -R vcap:vcap $RUN_DIR $LOG_DIR
+
+    mkdir -p $LIBSTORAGE_CONFIG
+    sudo cat > $LIBSTORAGE_CONFIG/config.yml << EOF
+<%= p('libstorage') %>
+EOF
+
+    echo $$ > $PIDFILE
+
+    cd /var/vcap/packages/libstorage/bin
+
+    exec ./lss-linux ./lss-linux -l debug -c $LIBSTORAGE_CONFIG/config.yml \
+      >>  $LOG_DIR/libstorage.stdout.log \
+      2>> $LOG_DIR/libstorage.stderr.log
+
+    ;;
+
+  stop)
+    kill -9 `cat $PIDFILE`
+    rm -f $PIDFILE
+
+    ;;
+
+  *)
+    echo "Usage: ctl {start|stop}" ;;
+
+esac

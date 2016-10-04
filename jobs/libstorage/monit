@@ -1,0 +1,5 @@
+check process libstorage
+  with pidfile /var/vcap/sys/run/libstorage/pid
+  start program "/var/vcap/jobs/libstorage/bin/ctl start"
+  stop program "/var/vcap/jobs/libstorage/bin/ctl stop"
+  group vcap

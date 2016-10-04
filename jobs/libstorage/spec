@@ -1,0 +1,12 @@
+---
+name: libstorage
+templates:
+  ctl.erb: bin/ctl
+
+packages:
+- libstorage
+
+properties:
+  libstorage:
+    description: yaml configuration for libstorage VM.
+    example: https://github.com/emccode/libstorage/blob/670d123dbd7159c7d44b55639a8d2ce4ab73d6fd/.tls/README.md
