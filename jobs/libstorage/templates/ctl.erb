@@ -15,7 +15,7 @@ case $1 in
 
     mkdir -p $LIBSTORAGE_CONFIG
     sudo cat > $LIBSTORAGE_CONFIG/config.yml << EOF
-<%= p('libstorage') %>
+<%= p('libstorage').to_json %>
 EOF
 
     echo $$ > $PIDFILE
