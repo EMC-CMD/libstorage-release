@@ -78,7 +78,7 @@ resources:
 - name: libstorage-release
   type: git
   source: &github-secrets
-    uri: https://github.com/tn5993/libstorage-release.git
+    uri: https://github.com/EMC-CMD/libstorage-release.git
     branch: master
     username: {{github_user}}
     password: {{github_password}}
