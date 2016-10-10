@@ -1,0 +1,52 @@
+name: libstorage
+director_uuid: ed63d33f-e16a-4ed7-890e-cb0edfcb002d
+
+releases:
+- {name: libstorage-release, version: latest}
+
+jobs:
+  - name: libstorage
+    instances: 1
+    networks:
+    - name: private
+    templates:
+    - name: libstorage
+      release: libstorage-release
+    persistent_disk_pool: medium
+    vm_type: medium
+    stemcell: trusty
+    azs:
+    - z1
+    properties:
+      libstorage:
+        libstorage:
+          logging:
+            level: debug
+          client:
+            type: controller
+          host: tcp://0.0.0.0:7981 #This will listen for incoming connections to libstorage on this VM.
+          server:
+            services:
+              isilonservice:
+                driver: isilon
+                isilon:
+                  endpoint: {{ isilon_endpoint }}
+                  insecure: {{ isilon_insecure }}
+                  username: {{ isilon_username }}
+                  password: {{ isilon_password }}
+                  volumePath: {{ isilon_volumepath }}
+                  nfsHost: {{ isilon_nfshost }}
+                  dataSubnet: {{ isilon_datasubnet }}
+                  quotas: {{ isilon_quotas }}
+
+stemcells:
+- alias: trusty
+  os: ubuntu-trusty
+  version: '3262.9'
+
+update:
+  canaries: 1
+  max_in_flight: 3
+  serial: false
+  canary_watch_time: 1000-240000
+  update_watch_time: 1000-240000

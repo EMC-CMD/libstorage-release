@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+from jinja2 import Environment, FileSystemLoader
+import os
+from subprocess import call
+import unittest
+
+class Test(unittest.TestCase):
+    def setUp(self):
+        bosh_uri=os.environ['BOSH_URI']
+        bosh_password=os.environ['BOSH_PASSWORD']
+        bosh_username=os.environ['BOSH_USERNAME']
+        os.chdir('libstorage-release')
+        self.bosh_target(bosh_uri, bosh_username, bosh_password)
+        self.generate_blobstore_creds()
+        self.create_and_upload_release("libstorage-release")
+
+    def tearDown(self):
+        self.delete_deployment("libstorage")
+        self.delete_release("libstorage-release")
+    #-----------------TESTS --------------------------
+    def test_bosh_release_lifecycle(self):
+        manifest_path = self.generate_manifest("manifest.template.yml", "manifest.yml")
+        self.deploy(manifest_path)
+
+    #-------------------HELPERS-----------------
+    def create_and_upload_release(self, release_name):
+        self.assert_call(["bosh", "create", "release", "--force", "--name", release_name])
+        self.assert_call(["bosh", "upload", "release"])
+
+    def delete_release(self, release_name):
+        self.assert_call(["bosh", "-n", "delete", "release", release_name])
+
+    def get_template_file(self, file_name):
+        template_folder='ci/templates'
+        env = Environment(loader=FileSystemLoader(template_folder))
+        return env.get_template(file_name)
+
+    def generate_manifest(self, template_file_name, dest_file_name):
+        template = self.get_template_file(template_file_name)
+        rendered = template.render(
+            isilon_endpoint=os.environ['ISILON_ENDPOINT'],
+            isilon_insecure=os.environ['ISILON_INSECURE'],
+            isilon_username=os.environ['ISILON_USERNAME'],
+            isilon_password=os.environ['ISILON_PASSWORD'],
+            isilon_volumePath=os.environ['ISILON_VOLUMEPATH'],
+            isilon_nfsHost=os.environ['ISILON_NFSHOST'],
+            isilon_dataSubnet=os.environ['ISILON_DATASUBNET'],
+            isilon_quotas=os.environ['ISILON_QUOTAS']
+        )
+
+        print(rendered)
+        manifest_path = os.path.join("ci/templates", dest_file_name)
+        with open(manifest_path, 'w') as f:
+            f.write(rendered)
+
+        return manifest_path
+
+
+    def generate_blobstore_creds(self):
+        print("GENERATING BLOBSTORE CREDENTIALS")
+        template = self.get_template_file('private.template.yml')
+        rendered = template.render(
+            aws_access_key=os.environ['AWS_ACCESS_KEY'],
+            aws_secret_key=os.environ['AWS_SECRET_KEY']
+        )
+        dest_path = "config/private.yml"
+        with open(dest_path, 'w') as f:
+            f.write(rendered)
+
+    def bosh_target(self, uri, username, password):
+        self.assert_call(["bosh", "-n", "target", uri])
+        self.assert_call(["bosh", "login", username, password])
+
+    def deploy(self, manifest_path):
+        self.assert_call(["bosh", "deployment", manifest_path])
+        self.assert_call(["bosh", "-n", "deploy"])
+
+    def delete_deployment(self, deployment_name):
+        self.assert_call(["bosh", "-n", "delete", "deployment", deployment_name])
+
+    def assert_call(self, command):
+        status = call(command)
+        self.assertEqual(status, 0)
+
+if __name__ == '__main__':
+    unittest.main()

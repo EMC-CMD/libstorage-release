@@ -1,0 +1,100 @@
+
+groups:
+- name: libstorage-release
+  jobs:
+  - integration
+  - ship-release
+
+jobs:
+- name: integration
+  serial: true
+  plan:
+  - aggregate:
+    - {trigger: true,         get: libstorage-release}
+  - task: integration
+    docker-image: &docker
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: {{docker_repo}}
+          insecure_registries: [{{docker_registry}}]
+    config:
+      <<: *docker
+      inputs:
+      - name: libstorage-release
+      params:
+        AWS_ACCESS_KEY: {{aws_access_key}}
+        AWS_SECRET_KEY: {{aws_secret_key}}
+        BOSH_URI: {{bosh_uri}}
+        BOSH_USERNAME: {{bosh_username}}
+        BOSH_PASSWORD: {{bosh_password}}
+        ISILON_ENDPOINT: {{isilon_endpoint}}
+        ISILON_INSECURE: {{isilon_insecure}}
+        ISILON_USERNAME: {{isilon_username}}
+        ISILON_PASSWORD: {{isilon_password}}
+        ISILON_VOLUMEPATH: {{isilon_volumepath}}
+        ISILON_NFSHOST: {{isilon_nfshost}}
+        ISILON_DATASUBNET: {{isilon_datasubnet}}
+        ISILON_QUOTAS: {{isilon_quotas}}
+      run:
+        path: libstorage-release/ci/tasks/integration
+
+- name: ship-release
+  serial: true
+  plan:
+  - aggregate:
+    - {trigger: true,         get: libstorage-release,  passed: [integration]}
+    - {trigger: false,        get: release-version, params: {bump: major}}
+  - task: ship-release
+    docker-image: &docker
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: {{docker_repo}}
+          insecure_registries: [{{docker_registry}}]
+    config:
+      <<: *docker
+      inputs:
+      - name: libstorage-release
+      - name: release-version
+      outputs:
+      - name: promote
+      params:
+        AWS_ACCESS_KEY: {{aws_access_key}}
+        AWS_SECRET_KEY: {{aws_secret_key}}
+        GITHUB_USER:              {{github_user}}
+        GITHUB_EMAIL:             {{github_email}}
+        VERSION_FILE:             release-version/number
+      run:
+        path: libstorage-release/ci/tasks/ship-release
+  - put: final-release
+    params: {file: promote/libstorage-release-*.tgz}
+  - put: libstorage-release
+    params: {repository: promote/libstorage-release, rebase: true, tag_prefix: "v", tag: promote/integer_version}
+
+resources:
+- name: libstorage-release
+  type: git
+  source: &github-secrets
+    uri: https://github.com/EMC-CMD/libstorage-release.git
+    branch: master
+    username: {{github_user}}
+    password: {{github_password}}
+    skip_ssl_verification: true
+
+- name: release-version
+  type: semver
+  source:
+    <<: *github-secrets
+    driver: git
+    file: ci/version
+
+- name: final-release
+  type: s3
+  source:
+    bucket: libstorage
+    regexp: libstorage-release-(.*).tgz
+    access_key_id: {{aws_access_key}}
+    secret_access_key: {{aws_secret_key}}

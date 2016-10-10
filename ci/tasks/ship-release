@@ -1,0 +1,35 @@
+#!/bin/bash
+# vim: set ft=sh
+
+set -e -x
+
+export REPO_NAME=libstorage-release
+export integer_version=`cut -d "." -f1 ${VERSION_FILE}`
+echo ${integer_version} > promote/integer_version
+export RELEASE_TGZ=${REPO_NAME}-${integer_version}.tgz
+
+cp -r ${REPO_NAME} promote/${REPO_NAME}
+pushd promote/${REPO_NAME}
+cat > config/private.yml <<EOF
+---
+blobstore:
+  s3:
+    access_key_id: ${AWS_ACCESS_KEY}
+    secret_access_key: ${AWS_SECRET_KEY}
+EOF
+  git config --global user.email ${GITHUB_EMAIL}
+  git config --global user.name ${GITHUB_USER}
+  git config --global push.default simple
+
+  echo "## v${integer_version}" >> CHANGELOG.md
+  echo `git log -1 --abbrev-commit --pretty=oneline` >> CHANGELOG.md
+  echo "${integer_version}.0.0" > ci/version
+  git add CHANGELOG.md
+  git add ci/version
+
+  git commit -m ":airplane: New final release v${integer_version}" -m "[ci skip]"
+
+  bosh -n create release --with-tarball --final --version ${integer_version}
+popd
+
+cp promote/${REPO_NAME}/releases/${REPO_NAME}/${RELEASE_TGZ} promote/
