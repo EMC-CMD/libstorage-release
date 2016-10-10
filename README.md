@@ -12,7 +12,9 @@ __NOTE: Using two adapters in our manifest is for clear documentation. One could
 
 Use the command `git clone https://github.com/EMC-CMD/libstorage-release.git` to clone this repository.
 
-Upload the bosh release provided with `bosh upload release releases/libstorage-release/libstorage-release-2.yml`. This should upload the release to your BOSH director.
+Create the release with the command `bosh create release --final`. This should add some release to the repository like `releases/libstorage-release/libstorage-release-1.yml`
+
+Upload the bosh release provided with `bosh upload release releases/libstorage-release/libstorage-release-1.yml`. This should upload the release to your BOSH director.
 
 ####STEP 2: Create manifest
 
@@ -65,7 +67,7 @@ Don't forget the `update` block similar to what is shown below. For more details
 Important piece of this manifest is in `properties.libstorage`. This field is the configuration for your libstorage client. The client binary will use this configuration file at runtime. Use this as an example to guide structure for services you wish to provide through libstorage.
 ```
       properties:
-        libstorage: |
+        libstorage:
           libstorage:
             logging:
               level: debug

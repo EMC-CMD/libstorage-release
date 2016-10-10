@@ -20,3 +20,5 @@ pkg/
 *.iml
 private.yml
 dev.yml
+.final_builds/
+releases/

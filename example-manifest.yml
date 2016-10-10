@@ -18,7 +18,7 @@ jobs:
     azs:
     - my-az
     properties:
-      libstorage: |
+      libstorage: 
         libstorage:
           logging:
             level: debug
